@@ -1,0 +1,131 @@
+version: '3.8'
+
+# Demo setup: 2 API servers, 2 schedulers (leader + standby), 3 workers
+# Run: docker compose -f docker-compose.demo.yml up --build
+
+services:
+  mongodb:
+    image: mongo:7
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: mongosh --eval "db.adminCommand('ping')" --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6380:6379'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: redis-cli ping
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api-1:
+    build: ./backend
+    command: ["node", "dist/index.js"]
+    ports:
+      - '3001:3000'
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/chronos
+      - REDIS_HOST=redis
+      - API_PORT=3000
+      - LOG_LEVEL=info
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  api-2:
+    build: ./backend
+    command: ["node", "dist/index.js"]
+    ports:
+      - '3002:3000'
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/chronos
+      - REDIS_HOST=redis
+      - API_PORT=3000
+      - LOG_LEVEL=info
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  scheduler-1:
+    build: ./backend
+    command: ["node", "dist/scheduler.js"]
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/chronos
+      - REDIS_HOST=redis
+      - LOG_LEVEL=info
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  scheduler-2:
+    build: ./backend
+    command: ["node", "dist/scheduler.js"]
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/chronos
+      - REDIS_HOST=redis
+      - LOG_LEVEL=info
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker-1:
+    build: ./backend
+    command: ["node", "dist/worker.js"]
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/chronos
+      - REDIS_HOST=redis
+      - LOG_LEVEL=info
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker-2:
+    build: ./backend
+    command: ["node", "dist/worker.js"]
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/chronos
+      - REDIS_HOST=redis
+      - LOG_LEVEL=info
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker-3:
+    build: ./backend
+    command: ["node", "dist/worker.js"]
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/chronos
+      - REDIS_HOST=redis
+      - LOG_LEVEL=info
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  mongo_data:
+  redis_data:

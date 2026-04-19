@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'feature/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports: ['6380:6379']
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 5
+      mongodb:
+        image: mongo:7
+        ports: ['27017:27017']
+        options: --health-cmd "mongosh --eval 'db.runCommand({ping:1})' --quiet" --health-interval 5s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend deps
+        run: cd backend && npm ci
+
+      - name: Lint (type-check)
+        run: cd backend && npx tsc --noEmit
+
+      - name: Unit tests
+        run: cd backend && npx vitest run --config vitest.config.ts
+        env:
+          MONGO_URI: mongodb://localhost:27017/chronos-test
+          REDIS_HOST: localhost
+          REDIS_PORT: '6380'
+          KAFKA_BROKERS: '' # Kafka not needed for unit tests
+
+      - name: Integration tests
+        run: cd backend && npx vitest run --config vitest.config.ts tests/integration/
+        env:
+          MONGO_URI: mongodb://localhost:27017/chronos-test
+          REDIS_HOST: localhost
+          REDIS_PORT: '6380'
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend deps
+        run: cd frontend && npm ci
+
+      - name: Type-check
+        run: cd frontend && npx tsc --noEmit
+
+      - name: Build
+        run: cd frontend && npx vite build
