@@ -75,6 +75,9 @@ const jobSchema = new Schema<IJob>(
 jobSchema.index({ tenantId: 1, status: 1 });
 jobSchema.index({ status: 1, runAt: 1 });
 jobSchema.index({ status: 1, lastHeartbeat: 1 });
-jobSchema.index({ tenantId: 1, idempotencyKey: 1 }, { unique: true, sparse: true });
+jobSchema.index(
+  { tenantId: 1, idempotencyKey: 1 },
+  { unique: true, partialFilterExpression: { idempotencyKey: { $exists: true, $type: 'string' } } }
+);
 
 export const Job = mongoose.model<IJob>('Job', jobSchema);
