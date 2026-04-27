@@ -19,7 +19,7 @@ Client / Dashboard
                     │  Scheduler │  │  Workers  │  ← N instances
                     │  (leader)  │  │  (pool)   │
                     │            │  │           │
-                    │  Poll set  │  │  XREADGROUP│
+                    │  Poll set  │  │ XREADGROUP│
                     │  Enqueue   │  │  Execute  │
                     │  Reaper    │  │  Heartbeat│
                     └────────────┘  └───────────┘
