@@ -1,12 +1,12 @@
 services:
-  # API Server (Web Service — has HTTP endpoint)
   - type: web
-    name: chronos-api
+    name: chronos
     runtime: node
     region: oregon
+    plan: free
     rootDir: backend
     buildCommand: npm ci && npm run build
-    startCommand: node dist/index.js
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -18,45 +18,5 @@ services:
         value: ""
       - key: API_PORT
         value: "10000"
-      - key: LOG_LEVEL
-        value: info
-
-  # Scheduler (Background Worker — no HTTP)
-  - type: worker
-    name: chronos-scheduler
-    runtime: node
-    region: oregon
-    rootDir: backend
-    buildCommand: npm ci && npm run build
-    startCommand: node dist/scheduler.js
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: MONGO_URI
-        sync: false
-      - key: REDIS_URL
-        sync: false
-      - key: KAFKA_BROKERS
-        value: ""
-      - key: LOG_LEVEL
-        value: info
-
-  # Worker (Background Worker — no HTTP)
-  - type: worker
-    name: chronos-worker
-    runtime: node
-    region: oregon
-    rootDir: backend
-    buildCommand: npm ci && npm run build
-    startCommand: node dist/worker.js
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: MONGO_URI
-        sync: false
-      - key: REDIS_URL
-        sync: false
-      - key: KAFKA_BROKERS
-        value: ""
       - key: LOG_LEVEL
         value: info
