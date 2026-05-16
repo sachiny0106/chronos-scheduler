@@ -95,7 +95,7 @@ export function MetricsPage() {
               <BarChart data={durData} margin={{ left: 0, right: 0 }}>
                 <XAxis dataKey="status" tick={tick} axisLine={false} tickLine={false} />
                 <YAxis tick={tick} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tip} cursor={{ fill: '#f3f4f6' }} formatter={(v: number) => [`${v}ms`, 'Avg']} />
+                <Tooltip contentStyle={tip} cursor={{ fill: '#f3f4f6' }} formatter={(v) => [`${v}ms`, 'Avg']} />
                 <Bar dataKey="avg" fill="#06b6d4" radius={[4, 4, 0, 0]} barSize={32} />
               </BarChart>
             </ResponsiveContainer>
