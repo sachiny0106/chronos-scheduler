@@ -28,7 +28,7 @@ jobs:
           node-version: 20
 
       - name: Install backend deps
-        run: cd backend && npm install
+        run: cd backend && npm install && npm install @rollup/rollup-linux-x64-gnu
 
       - name: Lint (type-check)
         run: cd backend && npx tsc --noEmit
