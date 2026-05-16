@@ -1,4 +1,6 @@
-const BASE = '/api';
+// In production (Vercel): hits Render backend URL via VITE_API_URL env var
+// In dev: proxied via vite.config.ts to localhost:3000
+const BASE = import.meta.env.VITE_API_URL || '/api';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
