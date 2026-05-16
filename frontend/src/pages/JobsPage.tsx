@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { listJobs, deleteJob } from '../lib/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { formatDistanceToNow } from 'date-fns';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Loader2, List as ListIcon } from 'lucide-react';
 
 const filters = ['', 'PENDING', 'SCHEDULED', 'QUEUED', 'RUNNING', 'COMPLETED', 'FAILED', 'DEAD_LETTER'];
 
@@ -40,94 +40,119 @@ export function JobsPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <p className="text-[14px] font-medium tracking-[-0.02em]" style={{ color: 'var(--text)' }}>Jobs</p>
-
-      {/* Filter tabs — underline style */}
-      <div className="flex gap-0" style={{ borderBottom: '1px solid var(--border)' }}>
-        {filters.map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className="px-3 py-2 text-[12px] transition-colors relative"
-            style={{ color: status === f ? 'var(--text)' : 'var(--text-muted)' }}
-          >
-            {f || 'All'}
-            {status === f && (
-              <span className="absolute bottom-0 left-3 right-3 h-px" style={{ background: 'var(--text)' }} />
-            )}
-          </button>
-        ))}
+    <div className="space-y-6 pb-10">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight mb-1" style={{ color: 'var(--text)' }}>Jobs</h1>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Manage and monitor all your scheduled tasks</p>
       </div>
 
-      {/* Table */}
-      <table className="w-full">
-        <thead>
-          <tr style={{ borderBottom: '1px solid var(--border)' }}>
-            {['Name', 'Status', 'Type', 'Priority', 'Scheduled', 'Created', ''].map(h => (
-              <th key={h} className="text-left py-2 px-3 text-[11px] font-normal uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr><td colSpan={7} className="py-12 text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>Loading...</td></tr>
-          ) : jobs.length === 0 ? (
-            <tr><td colSpan={7} className="py-12 text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>No jobs found</td></tr>
-          ) : jobs.map(j => (
-            <tr
-              key={j._id}
-              className="transition-colors"
-              style={{ borderBottom: '1px solid var(--border)' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
-              onMouseLeave={e => (e.currentTarget.style.background = '')}
-            >
-              <td className="py-2 px-3">
-                <Link to={`/jobs/${j._id}`} className="text-[13px] hover:underline" style={{ color: 'var(--text)' }}>{j.name}</Link>
-              </td>
-              <td className="py-2 px-3"><StatusBadge status={j.status} /></td>
-              <td className="py-2 px-3 text-[12px]" style={{ color: 'var(--text-muted)' }}>{j.type}</td>
-              <td className="py-2 px-3 text-[12px] tabular-nums" style={{ color: 'var(--text-muted)' }}>{j.priority}</td>
-              <td className="py-2 px-3 text-[12px]" style={{ color: 'var(--text-muted)' }}>
-                {formatDistanceToNow(new Date(j.runAt), { addSuffix: true })}
-              </td>
-              <td className="py-2 px-3 text-[12px]" style={{ color: 'var(--text-muted)' }}>
-                {formatDistanceToNow(new Date(j.createdAt), { addSuffix: true })}
-              </td>
-              <td className="py-2 px-3 w-8">
-                {['PENDING', 'SCHEDULED'].includes(j.status) && (
-                  <button onClick={() => { if (confirm('Delete?')) deleteJob(j._id).then(load); }} style={{ color: 'var(--text-muted)' }}>
-                    <Trash2 size={12} />
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Pagination — Prev / Next */}
-      {pages > 1 && (
-        <div className="flex items-center justify-center gap-4 text-[12px]" style={{ color: 'var(--text-muted)' }}>
-          <button
-            disabled={page <= 1}
-            onClick={() => { const n = new URLSearchParams(sp); n.set('page', String(page - 1)); setSp(n); }}
-            className="hover:underline disabled:opacity-30"
-            style={{ color: 'var(--accent)' }}
-          >
-            Prev
-          </button>
-          <span>{page} / {pages}</span>
-          <button
-            disabled={page >= pages}
-            onClick={() => { const n = new URLSearchParams(sp); n.set('page', String(page + 1)); setSp(n); }}
-            className="hover:underline disabled:opacity-30"
-            style={{ color: 'var(--accent)' }}
-          >
-            Next
-          </button>
+      <div className="glass-card overflow-hidden">
+        {/* Filter tabs */}
+        <div className="flex gap-2 p-2 overflow-x-auto" style={{ borderBottom: '1px solid var(--border)' }}>
+          {filters.map(f => {
+            const isActive = status === f;
+            return (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-4 py-1.5 text-[12px] font-medium rounded-md transition-all whitespace-nowrap
+                  ${isActive 
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100 border border-transparent'
+                  }`}
+              >
+                {f || 'All Jobs'}
+              </button>
+            )
+          })}
         </div>
-      )}
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-gray-50" style={{ borderBottom: '1px solid var(--border)' }}>
+                {['Name', 'Status', 'Type', 'Priority', 'Scheduled', 'Created', ''].map(h => (
+                  <th key={h} className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-20 text-center">
+                    <Loader2 size={24} className="mx-auto animate-spin" style={{ color: 'var(--accent)' }} />
+                  </td>
+                </tr>
+              ) : jobs.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-20 text-center">
+                    <div className="flex flex-col items-center justify-center opacity-40">
+                      <ListIcon size={32} className="mb-3 text-gray-500" />
+                      <p className="text-[13px] text-gray-500">No jobs found for this filter.</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : jobs.map(j => (
+                <tr
+                  key={j._id}
+                  className="group hover:bg-gray-50 transition-colors"
+                >
+                  <td className="py-3 px-4">
+                    <Link to={`/jobs/${j._id}`} className="text-[14px] font-medium hover:underline" style={{ color: 'var(--text)' }}>
+                      {j.name}
+                    </Link>
+                  </td>
+                  <td className="py-3 px-4"><StatusBadge status={j.status} /></td>
+                  <td className="py-3 px-4 text-[13px]" style={{ color: 'var(--text-secondary)' }}>{j.type}</td>
+                  <td className="py-3 px-4 text-[13px] tabular-nums" style={{ color: 'var(--text-secondary)' }}>{j.priority}</td>
+                  <td className="py-3 px-4 text-[13px]" style={{ color: 'var(--text-secondary)' }}>
+                    {formatDistanceToNow(new Date(j.runAt), { addSuffix: true })}
+                  </td>
+                  <td className="py-3 px-4 text-[13px]" style={{ color: 'var(--text-muted)' }}>
+                    {formatDistanceToNow(new Date(j.createdAt), { addSuffix: true })}
+                  </td>
+                  <td className="py-3 px-4 w-12 text-center">
+                    {['PENDING', 'SCHEDULED'].includes(j.status) && (
+                      <button 
+                        onClick={() => { if (confirm('Delete?')) deleteJob(j._id).then(load); }} 
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-50 hover:text-red-600 text-gray-400 transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {pages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 bg-gray-50 text-[13px]" style={{ borderTop: '1px solid var(--border)' }}>
+            <span style={{ color: 'var(--text-muted)' }}>
+              Showing page <span className="font-semibold text-gray-900">{page}</span> of <span className="font-semibold text-gray-900">{pages}</span>
+            </span>
+            <div className="flex gap-2">
+              <button
+                disabled={page <= 1}
+                onClick={() => { const n = new URLSearchParams(sp); n.set('page', String(page - 1)); setSp(n); }}
+                className="px-3 py-1.5 rounded-md bg-white hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-white transition-colors border border-gray-200 shadow-sm font-medium text-gray-700"
+              >
+                Previous
+              </button>
+              <button
+                disabled={page >= pages}
+                onClick={() => { const n = new URLSearchParams(sp); n.set('page', String(page + 1)); setSp(n); }}
+                className="px-3 py-1.5 rounded-md bg-white hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-white transition-colors border border-gray-200 shadow-sm font-medium text-gray-700"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

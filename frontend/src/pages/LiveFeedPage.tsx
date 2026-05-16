@@ -1,48 +1,56 @@
 import { Link } from 'react-router-dom';
 import { useJobEvents } from '../hooks/useJobEvents';
-
-const dots: Record<string, string> = {
-  PENDING: '#666', SCHEDULED: '#0070f3', QUEUED: '#f5a623',
-  RUNNING: '#79ffe1', COMPLETED: '#50e3c2', FAILED: '#ee0000',
-  RETRYING: '#f97316', DEAD_LETTER: '#ee0000',
-};
+import { StatusBadge } from '../components/StatusBadge';
+import { Radio } from 'lucide-react';
 
 export function LiveFeedPage() {
   const events = useJobEvents(100);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <p className="text-[14px] font-medium tracking-[-0.02em]" style={{ color: 'var(--text)' }}>Live</p>
-        <span className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--green)' }}>
-          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--green)' }} />
+    <div className="space-y-6 pb-10">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight mb-1" style={{ color: 'var(--text)' }}>Live Feed</h1>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Real-time stream of all job state transitions</p>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 glass-card text-xs font-semibold text-green-700 bg-green-50 border-green-200">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           Connected
-        </span>
+        </div>
       </div>
 
-      {events.length === 0 ? (
-        <p className="py-16 text-[12px]" style={{ color: 'var(--text-muted)' }}>
-          Waiting for events...
-        </p>
-      ) : (
-        <div style={{ fontFamily: "'JetBrains Mono', 'SF Mono', monospace" }}>
-          {events.map((e, i) => (
-            <div key={i} className="flex items-center gap-3 py-[5px] text-[12px]">
-              <span className="tabular-nums" style={{ color: 'var(--text-muted)', width: 60 }}>
-                {new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </span>
-              <span className="shrink-0 rounded-full" style={{ width: 5, height: 5, background: dots[e.to] || '#666' }} />
-              <span style={{ color: 'var(--text-muted)' }}>{e.from}</span>
-              <span style={{ color: 'var(--text-muted)' }}>→</span>
-              <span style={{ color: 'var(--text-secondary)' }}>{e.to}</span>
-              <Link to={`/jobs/${e.jobId}`} className="hover:underline" style={{ color: 'var(--accent)' }}>
-                {e.jobId.slice(-8)}
-              </Link>
-              {e.workerId && <span className="ml-auto" style={{ color: 'var(--text-muted)' }}>{e.workerId}</span>}
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="glass-card overflow-hidden">
+        {events.length === 0 ? (
+          <div className="py-24 flex flex-col items-center justify-center">
+            <Radio size={32} className="text-gray-300 mb-3" />
+            <p className="text-[14px]" style={{ color: 'var(--text-muted)' }}>Waiting for events to stream in...</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {events.map((e, i) => (
+              <div key={i} className="flex items-center gap-4 py-3 px-6 hover:bg-gray-50 transition-colors">
+                <span className="font-mono text-[12px] px-2 py-1 rounded bg-gray-100 text-gray-500 border border-gray-200 w-[80px] text-center">
+                  {new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
+                
+                <span className="text-[13px] w-24 text-right" style={{ color: 'var(--text-muted)' }}>{e.from}</span>
+                <span className="text-gray-300">→</span>
+                <div className="w-24 shrink-0"><StatusBadge status={e.to} /></div>
+                
+                <Link to={`/jobs/${e.jobId}`} className="font-mono text-[13px] hover:underline font-semibold" style={{ color: 'var(--accent)' }}>
+                  {e.jobId.slice(-8)}
+                </Link>
+                
+                {e.workerId && (
+                  <span className="ml-auto font-mono text-[12px] bg-gray-50 px-2 py-0.5 rounded border border-gray-200" style={{ color: 'var(--text-muted)' }}>
+                    {e.workerId}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

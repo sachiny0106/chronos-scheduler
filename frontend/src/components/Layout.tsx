@@ -3,10 +3,10 @@ import { Sidebar } from './Sidebar';
 
 export function Layout() {
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg)' }}>
+    <div className="flex h-screen overflow-hidden bg-[var(--bg)] text-[var(--text)]">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto px-6 py-5">
-        <div className="max-w-5xl">
+      <main className="flex-1 overflow-y-auto px-8 py-8">
+        <div className="max-w-6xl mx-auto">
           <Outlet />
         </div>
       </main>
