@@ -1,4 +1,4 @@
-import { Kafka, Producer, Consumer, logLevel } from 'kafkajs';
+import { Kafka, Producer, Consumer, logLevel, SASLOptions } from 'kafkajs';
 import { config } from '../config';
 import { createChildLogger } from './logger';
 
@@ -18,6 +18,8 @@ function getKafka(): Kafka {
       brokers: config.kafka.brokers,
       logLevel: logLevel.WARN,
       retry: { initialRetryTime: 300, retries: 5 },
+      ...(config.kafka.ssl ? { ssl: true } : {}),
+      ...(config.kafka.sasl ? { sasl: config.kafka.sasl as SASLOptions } : {}),
     });
   }
   return _kafka;

@@ -4,14 +4,21 @@ import { createChildLogger } from './logger';
 
 const log = createChildLogger('redis');
 
-// Separate clients needed for: general ops, blocking XREADGROUP, pub/sub
 export function createRedisClient(name: string): Redis {
-  const client = new Redis({
-    host: config.redis.host,
-    port: config.redis.port,
-    maxRetriesPerRequest: null, // required for blocking commands
+  const opts: any = {
+    maxRetriesPerRequest: null,
     lazyConnect: true,
-  });
+  };
+
+  let client: Redis;
+
+  if (config.redis.url) {
+    // Cloud Redis (Upstash) — uses rediss:// URL with TLS
+    client = new Redis(config.redis.url, opts);
+  } else {
+    // Local Redis — host/port
+    client = new Redis({ host: config.redis.host, port: config.redis.port, ...opts });
+  }
 
   client.on('connect', () => log.info({ name }, 'connected'));
   client.on('error', (err) => log.error({ name, err: err.message }, 'error'));
@@ -22,15 +29,10 @@ export function createRedisClient(name: string): Redis {
 let _client: Redis | null = null;
 
 export function getRedisClient(): Redis {
-  if (!_client) {
-    _client = createRedisClient('default');
-  }
+  if (!_client) _client = createRedisClient('default');
   return _client;
 }
 
 export async function closeRedis(): Promise<void> {
-  if (_client) {
-    await _client.quit();
-    _client = null;
-  }
+  if (_client) { await _client.quit(); _client = null; }
 }

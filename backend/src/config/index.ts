@@ -15,6 +15,8 @@ export const config = {
     uri: env('MONGO_URI', 'mongodb://localhost:27017/chronos'),
   },
   redis: {
+    // REDIS_URL takes priority (Upstash uses rediss:// URLs with TLS)
+    url: process.env.REDIS_URL || '',
     host: env('REDIS_HOST', 'localhost'),
     port: envInt('REDIS_PORT', 6380),
   },
@@ -35,6 +37,12 @@ export const config = {
   },
   kafka: {
     brokers: env('KAFKA_BROKERS', 'localhost:9092').split(','),
+    sasl: process.env.KAFKA_USERNAME ? {
+      mechanism: 'scram-sha-256' as const,
+      username: process.env.KAFKA_USERNAME,
+      password: process.env.KAFKA_PASSWORD || '',
+    } : undefined,
+    ssl: process.env.KAFKA_USERNAME ? true : false,
   },
   log: {
     level: env('LOG_LEVEL', 'info'),
