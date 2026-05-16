@@ -36,7 +36,7 @@ export const config = {
     shutdownGracePeriodMs: 10000,
   },
   kafka: {
-    brokers: env('KAFKA_BROKERS', 'localhost:9092').split(','),
+    brokers: (process.env.KAFKA_BROKERS || '').split(',').filter(Boolean),
     sasl: process.env.KAFKA_USERNAME ? {
       mechanism: 'scram-sha-256' as const,
       username: process.env.KAFKA_USERNAME,
