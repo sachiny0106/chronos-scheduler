@@ -1,9 +1,3 @@
-console.log('--- chronos starting ---');
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('MONGO_URI:', process.env.MONGO_URI ? 'set' : 'MISSING');
-console.log('REDIS_URL:', process.env.REDIS_URL ? 'set' : 'MISSING');
-console.log('API_PORT:', process.env.API_PORT || 'default');
-
 import { config } from './config';
 import { connectMongo, closeMongo } from './lib/mongo';
 import { getRedisClient, closeRedis } from './lib/redis';
@@ -20,12 +14,10 @@ import './handlers/sample-handler';
 const log = createChildLogger('combined');
 
 async function main() {
-  console.log('connecting to mongo...');
   await connectMongo();
-  console.log('connecting to redis...');
   await getRedisClient().connect();
 
-  if (config.kafka.brokers[0] && config.kafka.brokers[0] !== '') {
+  if (config.kafka.brokers.length > 0) {
     try {
       const { ensureTopics } = await import('./lib/kafka');
       await ensureTopics();
@@ -34,13 +26,11 @@ async function main() {
     }
   }
 
-  // API
   const { server } = createApp();
   server.listen(config.api.port, () => {
     log.info({ port: config.api.port }, 'API started');
   });
 
-  // Scheduler
   const leader = new LeaderElection();
   const loop = new SchedulerLoop(leader);
   const reaper = new Reaper(leader);
@@ -49,12 +39,11 @@ async function main() {
   leader.on('demoted', () => log.warn('leader demoted'));
   await loop.start();
   reaper.start();
-  log.info('scheduler started');
 
-  // Worker
   const worker = new WorkerPool();
   await worker.start();
-  log.info({ workerId: worker.workerId }, 'worker started');
+
+  log.info({ workerId: worker.workerId }, 'all services started');
 
   const shutdown = async (signal: string) => {
     log.info({ signal }, 'shutting down');
@@ -74,6 +63,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('STARTUP FAILED:', err);
+  log.fatal({ err: err.message }, 'startup failed');
   process.exit(1);
 });
