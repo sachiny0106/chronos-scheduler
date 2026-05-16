@@ -1,3 +1,9 @@
+console.log('--- chronos starting ---');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('MONGO_URI:', process.env.MONGO_URI ? 'set' : 'MISSING');
+console.log('REDIS_URL:', process.env.REDIS_URL ? 'set' : 'MISSING');
+console.log('API_PORT:', process.env.API_PORT || 'default');
+
 import { config } from './config';
 import { connectMongo, closeMongo } from './lib/mongo';
 import { getRedisClient, closeRedis } from './lib/redis';
@@ -14,7 +20,9 @@ import './handlers/sample-handler';
 const log = createChildLogger('combined');
 
 async function main() {
+  console.log('connecting to mongo...');
   await connectMongo();
+  console.log('connecting to redis...');
   await getRedisClient().connect();
 
   if (config.kafka.brokers[0] && config.kafka.brokers[0] !== '') {
