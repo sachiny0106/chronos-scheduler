@@ -66,6 +66,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  log.fatal({ err: err.message }, 'startup failed');
+  console.error('STARTUP FAILED:', err);
   process.exit(1);
 });
