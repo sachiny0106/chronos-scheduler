@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Distributed task scheduler with leader election, Redis Streams consumer groups, and fault tolerance",
   "main": "dist/index.js",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "concurrently -n api,sched,worker -c blue,yellow,green \"tsx watch src/index.ts\" \"tsx watch src/scheduler.ts\" \"tsx watch src/worker.ts\"",
